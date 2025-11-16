@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kuis Senyawa Karbon Interaktif</title>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        @keyframes bounce-in {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes slide-up {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes pulse-correct {
+            0%, 100% { background-color: #10b981; }
+            50% { background-color: #059669; }
+        }
+        
+        @keyframes pulse-wrong {
+            0%, 100% { background-color: #ef4444; }
+            50% { background-color: #dc2626; }
+        }
+        
+        .bounce-in { animation: bounce-in 0.6s ease-out; }
+        .slide-up { animation: slide-up 0.5s ease-out; }
+        .pulse-correct { animation: pulse-correct 0.5s ease-in-out; }
+        .pulse-wrong { animation: pulse-wrong 0.5s ease-in-out; }
+        
+        .molecule-bg {
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="h-full molecule-bg">
+  <div class="min-h-full flex items-center justify-center p-4">
+   <div class="w-full max-w-4xl"><!-- Welcome Screen -->
+    <div id="welcome-screen" class="text-center bounce-in">
+     <div class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border-4 border-blue-200">
+      <div class="mb-6">
+       <div class="text-6xl mb-4">
+        🧪⚗️
+       </div>
+       <h1 id="quiz-title" class="text-4xl font-bold text-blue-800 mb-4">Petualangan Senyawa Karbon</h1>
+       <p id="welcome-message" class="text-lg text-gray-700 mb-6">Selamat datang di dunia menakjubkan senyawa karbon! Mari jelajahi struktur, tata nama, dan isomer dengan cara yang seru dan interaktif!</p>
+      </div>
+      <div class="bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl p-6 mb-6">
+       <h3 class="text-xl font-semibold text-gray-800 mb-3">🎯 Yang Akan Kamu Pelajari:</h3>
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+        <div class="flex items-center space-x-3"><span class="text-2xl">🔗</span> <span class="text-gray-700">Struktur Senyawa Karbon</span>
+        </div>
+        <div class="flex items-center space-x-3"><span class="text-2xl">📝</span> <span class="text-gray-700">Tata Nama IUPAC</span>
+        </div>
+        <div class="flex items-center space-x-3"><span class="text-2xl">🔄</span> <span class="text-gray-700">Jenis-jenis Isomer</span>
+        </div>
+        <div class="flex items-center space-x-3"><span class="text-2xl">⚡</span> <span class="text-gray-700">Sifat &amp; Reaksi</span>
+        </div>
+       </div>
+      </div>
+      <div class="mb-6"><label for="user-name" class="block text-lg font-medium text-gray-700 mb-2">Siapa nama kamu?</label> <input type="text" id="user-name" placeholder="Masukkan nama kamu..." class="w-full max-w-md mx-auto px-4 py-3 border-2 border-blue-300 rounded-xl text-center text-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+      </div><button id="start-quiz" class="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white font-bold py-4 px-8 rounded-2xl text-xl transform hover:scale-105 transition-all duration-200 shadow-lg"> 🚀 Mulai Petualangan! </button>
+     </div>
+    </div><!-- Quiz Screen -->
+    <div id="quiz-screen" class="hidden">
+     <div class="bg-white rounded-3xl shadow-2xl p-6 mb-6 border-4 border-purple-200"><!-- Progress Bar -->
+      <div class="mb-6">
+       <div class="flex justify-between items-center mb-2"><span class="text-sm font-medium text-purple-700">Progress</span> <span id="question-counter" class="text-sm font-medium text-purple-700">1 / 10</span>
+       </div>
+       <div class="w-full bg-purple-200 rounded-full h-3">
+        <div id="progress-bar" class="bg-gradient-to-r from-purple-600 to-pink-600 h-3 rounded-full transition-all duration-500" style="width: 10%"></div>
+       </div>
+      </div><!-- Question -->
+      <div class="text-center mb-8">
+       <div id="question-icon" class="text-4xl mb-4">
+        🤔
+       </div>
+       <h2 id="question-text" class="text-2xl font-bold text-gray-800 mb-6"></h2>
+       <div id="question-image" class="mb-6"></div>
+      </div><!-- Answer Options -->
+      <div id="answer-options" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      </div><!-- Feedback -->
+      <div id="feedback" class="hidden text-center p-6 rounded-2xl mb-6">
+       <div id="feedback-icon" class="text-4xl mb-3"></div>
+       <h3 id="feedback-title" class="text-xl font-bold mb-2"></h3>
+       <p id="feedback-text" class="text-gray-700"></p>
+      </div><!-- Next Button -->
+      <div class="text-center"><button id="next-question" class="hidden bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-6 rounded-xl transform hover:scale-105 transition-all duration-200"> Lanjut ke Soal Berikutnya → </button>
+      </div>
+     </div>
+    </div><!-- Results Screen -->
+    <div id="results-screen" class="hidden text-center">
+     <div class="bg-white rounded-3xl shadow-2xl p-8 border-4 border-yellow-200 bounce-in">
+      <div id="results-icon" class="text-6xl mb-4"></div>
+      <h2 id="results-title" class="text-3xl font-bold mb-4"></h2>
+      <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl p-6 mb-6">
+       <div class="text-4xl font-bold text-orange-600 mb-2"><span id="final-score">0</span> / <span id="total-questions">10</span>
+       </div>
+       <p class="text-lg text-gray-700">Skor Akhir Kamu</p>
+      </div>
+      <div id="performance-message" class="mb-6 p-4 rounded-xl"></div>
+      <p id="completion-message" class="text-lg text-gray-700 mb-6">Selamat! Kamu telah menyelesaikan petualangan senyawa karbon. Terus belajar dan jelajahi dunia kimia yang menakjubkan!</p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center"><button id="restart-quiz" class="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white font-bold py-3 px-6 rounded-xl transform hover:scale-105 transition-all duration-200"> 🔄 Coba Lagi </button> <button id="view-leaderboard" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-6 rounded-xl transform hover:scale-105 transition-all duration-200"> 🏆 Lihat Skor Terbaik </button>
+      </div>
+     </div>
+    </div><!-- Leaderboard Screen -->
+    <div id="leaderboard-screen" class="hidden">
+     <div class="bg-white rounded-3xl shadow-2xl p-8 border-4 border-gold-200">
+      <div class="text-center mb-6">
+       <div class="text-4xl mb-4">
+        🏆
+       </div>
+       <h2 class="text-3xl font-bold text-yellow-600 mb-4">Papan Skor Terbaik</h2>
+      </div>
+      <div id="leaderboard-list" class="space-y-3 mb-6">
+      </div>
+      <div class="text-center"><button id="back-to-results" class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-3 px-6 rounded-xl transform hover:scale-105 transition-all duration-200"> ← Kembali ke Hasil </button>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+        // Configuration
+        const defaultConfig = {
+            quiz_title: "Petualangan Senyawa Karbon",
+            welcome_message: "Selamat datang di dunia menakjubkan senyawa karbon! Mari jelajahi struktur, tata nama, dan isomer dengan cara yang seru dan interaktif!",
+            completion_message: "Selamat! Kamu telah menyelesaikan petualangan senyawa karbon. Terus belajar dan jelajahi dunia kimia yang menakjubkan!",
+            background_color: "#f0f9ff",
+            primary_color: "#3b82f6",
+            secondary_color: "#10b981",
+            text_color: "#1f2937",
+            accent_color: "#8b5cf6"
+        };
+
+        // Quiz Questions
+        const questions = [
+            {
+                question: "Apa nama IUPAC untuk senyawa CH₃-CH₂-CH₂-CH₃?",
+                options: ["Butana", "Propana", "Pentana", "Metana"],
+                correct: 0,
+                icon: "🔗",
+                explanation: "CH₃-CH₂-CH₂-CH₃ memiliki 4 atom karbon dalam rantai lurus, sehingga dinamakan butana."
+            },
+            {
+                question: "Berapa jumlah isomer struktur untuk C₄H₁₀?",
+                options: ["1", "2", "3", "4"],
+                correct: 1,
+                icon: "🔄",
+                explanation: "C₄H₁₀ memiliki 2 isomer: butana (rantai lurus) dan 2-metilpropana (rantai bercabang)."
+            },
+            {
+                question: "Gugus fungsi apa yang terdapat pada senyawa alkohol?",
+                options: ["-COOH", "-OH", "-CHO", "-CO-"],
+                correct: 1,
+                icon: "⚗️",
+                explanation: "Alkohol memiliki gugus fungsi hidroksil (-OH) yang terikat pada atom karbon."
+            },
+            {
+                question: "Nama IUPAC untuk CH₃-CH(CH₃)-CH₂-CH₃ adalah:",
+                options: ["2-metilbutana", "3-metilbutana", "Pentana", "2-etilpropana"],
+                correct: 0,
+                icon: "📝",
+                explanation: "Rantai utama memiliki 4 karbon (butana) dengan cabang metil di posisi 2, jadi 2-metilbutana."
+            },
+            {
+                question: "Jenis isomer apa yang dimiliki oleh but-1-ena dan but-2-ena?",
+                options: ["Isomer posisi", "Isomer rantai", "Isomer gugus fungsi", "Isomer geometri"],
+                correct: 0,
+                icon: "🔄",
+                explanation: "But-1-ena dan but-2-ena adalah isomer posisi karena perbedaan letak ikatan rangkap."
+            },
+            {
+                question: "Rumus molekul benzena adalah:",
+                options: ["C₆H₆", "C₆H₁₂", "C₆H₁₄", "C₆H₁₀"],
+                correct: 0,
+                icon: "⭕",
+                explanation: "Benzena memiliki rumus molekul C₆H₆ dengan struktur cincin aromatik."
+            },
+            {
+                question: "Senyawa dengan rumus CH₃-CO-CH₃ termasuk golongan:",
+                options: ["Alkohol", "Aldehid", "Keton", "Asam karboksilat"],
+                correct: 2,
+                icon: "🧪",
+                explanation: "CH₃-CO-CH₃ (aseton) memiliki gugus karbonil (C=O) di tengah rantai, sehingga termasuk keton."
+            },
+            {
+                question: "Hibridisasi atom karbon pada etena (C₂H₄) adalah:",
+                options: ["sp³", "sp²", "sp", "sp³d"],
+                correct: 1,
+                icon: "⚛️",
+                explanation: "Atom karbon pada etena memiliki ikatan rangkap, sehingga hibridisasinya sp²."
+            },
+            {
+                question: "Nama IUPAC untuk CH₃-CH₂-CHO adalah:",
+                options: ["Propanal", "Propanon", "Propanol", "Asam propanoat"],
+                correct: 0,
+                icon: "🔬",
+                explanation: "CHO adalah gugus aldehid, dan dengan 3 atom karbon dinamakan propanal."
+            },
+            {
+                question: "Isomer geometri (cis-trans) dapat terjadi pada:",
+                options: ["Alkana", "Alkena", "Alkuna", "Benzena"],
+                correct: 1,
+                icon: "🔄",
+                explanation: "Isomer geometri terjadi pada alkena karena adanya ikatan rangkap yang membatasi rotasi."
+            }
+        ];
+
+        // Game State
+        let currentQuestion = 0;
+        let score = 0;
+        let userName = "";
+        let gameData = [];
+
+        // Data Handler
+        const dataHandler = {
+            onDataChanged(data) {
+                gameData = data;
+                if (document.getElementById('leaderboard-screen').style.display !== 'none') {
+                    renderLeaderboard();
+                }
+            }
+        };
+
+        // Initialize SDKs
+        async function initializeApp() {
+            // Initialize Data SDK
+            const dataResult = await window.dataSdk.init(dataHandler);
+            if (!dataResult.isOk) {
+                console.error("Failed to initialize data SDK");
+            }
+
+            // Initialize Element SDK
+            if (window.elementSdk) {
+                window.elementSdk.init({
+                    defaultConfig,
+                    onConfigChange: async (config) => {
+                        document.getElementById('quiz-title').textContent = config.quiz_title || defaultConfig.quiz_title;
+                        document.getElementById('welcome-message').textContent = config.welcome_message || defaultConfig.welcome_message;
+                        document.getElementById('completion-message').textContent = config.completion_message || defaultConfig.completion_message;
+                        
+                        document.body.style.background = `linear-gradient(135deg, ${config.background_color || defaultConfig.background_color}, ${config.secondary_color || defaultConfig.secondary_color})`;
+                    },
+                    mapToCapabilities: (config) => ({
+                        recolorables: [
+                            {
+                                get: () => config.background_color || defaultConfig.background_color,
+                                set: (value) => {
+                                    if (window.elementSdk) {
+                                        window.elementSdk.setConfig({ background_color: value });
+                                    }
+                                }
+                            },
+                            {
+                                get: () => config.primary_color || defaultConfig.primary_color,
+                                set: (value) => {
+                                    if (window.elementSdk) {
+                                        window.elementSdk.setConfig({ primary_color: value });
+                                    }
+                                }
+                            },
+                            {
+                                get: () => config.secondary_color || defaultConfig.secondary_color,
+                                set: (value) => {
+                                    if (window.elementSdk) {
+                                        window.elementSdk.setConfig({ secondary_color: value });
+                                    }
+                                }
+                            },
+                            {
+                                get: () => config.text_color || defaultConfig.text_color,
+                                set: (value) => {
+                                    if (window.elementSdk) {
+                                        window.elementSdk.setConfig({ text_color: value });
+                                    }
+                                }
+                            },
+                            {
+                                get: () => config.accent_color || defaultConfig.accent_color,
+                                set: (value) => {
+                                    if (window.elementSdk) {
+                                        window.elementSdk.setConfig({ accent_color: value });
+                                    }
+                                }
+                            }
+                        ],
+                        borderables: [],
+                        fontEditable: undefined,
+                        fontSizeable: undefined
+                    }),
+                    mapToEditPanelValues: (config) => new Map([
+                        ["quiz_title", config.quiz_title || defaultConfig.quiz_title],
+                        ["welcome_message", config.welcome_message || defaultConfig.welcome_message],
+                        ["completion_message", config.completion_message || defaultConfig.completion_message]
+                    ])
+                });
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('start-quiz').addEventListener('click', startQuiz);
+        document.getElementById('next-question').addEventListener('click', nextQuestion);
+        document.getElementById('restart-quiz').addEventListener('click', restartQuiz);
+        document.getElementById('view-leaderboard').addEventListener('click', showLeaderboard);
+        document.getElementById('back-to-results').addEventListener('click', showResults);
+
+        function startQuiz() {
+            const nameInput = document.getElementById('user-name');
+            userName = nameInput.value.trim();
+            
+            if (!userName) {
+                nameInput.style.borderColor = '#ef4444';
+                nameInput.placeholder = 'Nama wajib diisi!';
+                return;
+            }
+
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            document.getElementById('quiz-screen').classList.add('slide-up');
+            
+            currentQuestion = 0;
+            score = 0;
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const question = questions[currentQuestion];
+            
+            // Update progress
+            document.getElementById('question-counter').textContent = `${currentQuestion + 1} / ${questions.length}`;
+            document.getElementById('progress-bar').style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+            
+            // Update question
+            document.getElementById('question-icon').textContent = question.icon;
+            document.getElementById('question-text').textContent = question.question;
+            
+            // Create answer options
+            const optionsContainer = document.getElementById('answer-options');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'bg-gray-100 hover:bg-blue-100 border-2 border-gray-300 hover:border-blue-400 rounded-xl p-4 text-left transition-all duration-200 transform hover:scale-105';
+                button.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center font-bold text-blue-800">
+                            ${String.fromCharCode(65 + index)}
+                        </div>
+                        <span class="text-gray-800 font-medium">${option}</span>
+                    </div>
+                `;
+                button.addEventListener('click', () => selectAnswer(index));
+                optionsContainer.appendChild(button);
+            });
+            
+            // Hide feedback and next button
+            document.getElementById('feedback').classList.add('hidden');
+            document.getElementById('next-question').classList.add('hidden');
+        }
+
+        function selectAnswer(selectedIndex) {
+            const question = questions[currentQuestion];
+            const isCorrect = selectedIndex === question.correct;
+            const buttons = document.querySelectorAll('#answer-options button');
+            
+            // Disable all buttons
+            buttons.forEach(button => {
+                button.disabled = true;
+                button.classList.remove('hover:bg-blue-100', 'hover:border-blue-400', 'hover:scale-105');
+            });
+            
+            // Highlight correct and wrong answers
+            buttons[question.correct].classList.add('bg-green-500', 'text-white', 'border-green-600');
+            if (!isCorrect) {
+                buttons[selectedIndex].classList.add('bg-red-500', 'text-white', 'border-red-600');
+            }
+            
+            // Update score
+            if (isCorrect) {
+                score++;
+            }
+            
+            // Show feedback
+            showFeedback(isCorrect, question.explanation);
+        }
+
+        function showFeedback(isCorrect, explanation) {
+            const feedback = document.getElementById('feedback');
+            const feedbackIcon = document.getElementById('feedback-icon');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackText = document.getElementById('feedback-text');
+            
+            if (isCorrect) {
+                feedback.className = 'text-center p-6 rounded-2xl mb-6 bg-green-100 border-2 border-green-300 pulse-correct';
+                feedbackIcon.textContent = '🎉';
+                feedbackTitle.textContent = 'Benar Sekali!';
+                feedbackTitle.className = 'text-xl font-bold mb-2 text-green-800';
+            } else {
+                feedback.className = 'text-center p-6 rounded-2xl mb-6 bg-red-100 border-2 border-red-300 pulse-wrong';
+                feedbackIcon.textContent = '💡';
+                feedbackTitle.textContent = 'Hampir Benar!';
+                feedbackTitle.className = 'text-xl font-bold mb-2 text-red-800';
+            }
+            
+            feedbackText.textContent = explanation;
+            feedback.classList.remove('hidden');
+            
+            // Show next button
+            document.getElementById('next-question').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        async function finishQuiz() {
+            // Save score to database
+            if (gameData.length < 999) {
+                const result = await window.dataSdk.create({
+                    user_name: userName,
+                    score: score,
+                    total_questions: questions.length,
+                    completed_at: new Date().toISOString()
+                });
+                
+                if (!result.isOk) {
+                    console.error("Failed to save score");
+                }
+            }
+            
+            document.getElementById('quiz-screen').classList.add('hidden');
+            showResults();
+        }
+
+        function showResults() {
+            document.getElementById('leaderboard-screen').classList.add('hidden');
+            document.getElementById('results-screen').classList.remove('hidden');
+            document.getElementById('results-screen').classList.add('bounce-in');
+            
+            const percentage = Math.round((score / questions.length) * 100);
+            
+            // Update results
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('total-questions').textContent = questions.length;
+            
+            // Performance message
+            const performanceDiv = document.getElementById('performance-message');
+            let message, icon, bgClass;
+            
+            if (percentage >= 90) {
+                message = "Luar biasa! Kamu adalah ahli senyawa karbon! 🌟";
+                icon = "🏆";
+                bgClass = "bg-yellow-100 text-yellow-800 border-2 border-yellow-300";
+            } else if (percentage >= 70) {
+                message = "Bagus sekali! Pemahaman kamu sudah sangat baik! 👏";
+                icon = "🥈";
+                bgClass = "bg-green-100 text-green-800 border-2 border-green-300";
+            } else if (percentage >= 50) {
+                message = "Tidak buruk! Terus belajar untuk hasil yang lebih baik! 💪";
+                icon = "🥉";
+                bgClass = "bg-blue-100 text-blue-800 border-2 border-blue-300";
+            } else {
+                message = "Jangan menyerah! Coba lagi dan pasti bisa lebih baik! 🚀";
+                icon = "📚";
+                bgClass = "bg-orange-100 text-orange-800 border-2 border-orange-300";
+            }
+            
+            document.getElementById('results-icon').textContent = icon;
+            document.getElementById('results-title').textContent = `${userName}, ${message}`;
+            performanceDiv.className = `mb-6 p-4 rounded-xl ${bgClass}`;
+            performanceDiv.textContent = `Skor: ${percentage}%`;
+        }
+
+        function showLeaderboard() {
+            document.getElementById('results-screen').classList.add('hidden');
+            document.getElementById('leaderboard-screen').classList.remove('hidden');
+            renderLeaderboard();
+        }
+
+        function renderLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboard-list');
+            leaderboardList.innerHTML = '';
+            
+            if (gameData.length === 0) {
+                leaderboardList.innerHTML = '<p class="text-center text-gray-500">Belum ada skor yang tersimpan</p>';
+                return;
+            }
+            
+            // Sort by score (descending) and take top 10
+            const sortedData = [...gameData]
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 10);
+            
+            sortedData.forEach((entry, index) => {
+                const percentage = Math.round((entry.score / entry.total_questions) * 100);
+                const date = new Date(entry.completed_at).toLocaleDateString('id-ID');
+                
+                let medal = '';
+                if (index === 0) medal = '🥇';
+                else if (index === 1) medal = '🥈';
+                else if (index === 2) medal = '🥉';
+                else medal = `${index + 1}.`;
+                
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border-2 border-purple-200';
+                entryDiv.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl">${medal}</span>
+                            <div>
+                                <div class="font-bold text-gray-800">${entry.user_name}</div>
+                                <div class="text-sm text-gray-600">${date}</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-purple-600">${entry.score}/${entry.total_questions}</div>
+                            <div class="text-sm text-gray-600">${percentage}%</div>
+                        </div>
+                    </div>
+                `;
+                leaderboardList.appendChild(entryDiv);
+            });
+        }
+
+        function restartQuiz() {
+            document.getElementById('results-screen').classList.add('hidden');
+            document.getElementById('welcome-screen').classList.remove('hidden');
+            document.getElementById('user-name').value = '';
+            currentQuestion = 0;
+            score = 0;
+        }
+
+        // Initialize app when page loads
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99dfd4be54a45f87',t:'MTc2MzA1MzI4Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
